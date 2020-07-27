@@ -37,8 +37,8 @@ module.exports.initPlayer = function(client, guildID) {
  * @param {Client} client 
  * @param {Message} message 
  */
-module.exports.heathBeat = function(client, message) {
-    const player = this.initPlayer(client, message.guild.id);
+module.exports.heathBeat = function(client, guildID) {
+    const player = this.initPlayer(client, guildID);
     player.backup.index = player.index;
     player.dispatcher ? player.backup.seek = player.dispatcher.streamTime : null;
 };
@@ -91,40 +91,32 @@ module.exports.parseSeconde = function(seconds) {
  * Play a song
  * @param {Message} message 
  */
-module.exports.play = async function (client, message, seek = 0) {
-    const player = this.initPlayer(client, message.guild.id);
+module.exports.play = async function (client, message, seek = 0, guildID = null) {
+    const player = this.initPlayer(client, message ? message.guild.id : guildID);
     if (!player.queue || player.queue.length < 1) {
-        console.log('suite x000');
-        return message.channel.send(`Playlist is empty`);
+      return message ? message.channel.send(`The playlist is empty`) : null;
     };
     if (!player.queue[player.index]) {
         player.index = player.queue.length;
       if (!player.queue[player.index]) {
         player.index = 0;
         if (!player.queue[player.index]) {
-            console.log('suite x001');
-            return message.channel.send(`Playlist is empty`);
+          return message ? message.channel.send(`The playlist is empty`) : null;
         };
       };
     };
-    console.log('suite');
-    console.log(player);
-    const msgDl = await message.channel.send('Music downloading 📥');
     player.dispatcher = player.connection.play(
         await ytdl(`https://www.youtube.com/watch?v=${player.queue[player.index].id.videoId}`, {
           filter: 'audioonly',
           quality: 'highestaudio',
         }), {
           volume: player.volume,
-          highWaterMark: 100,
-          fec: true,
-          plp: 30,
-          bitrate: 64,
+          highWaterMark: 20,
           seek,
         },
     );
     const heatBeat = setInterval(() => {
-        this.heathBeat(client, message);
+        this.heathBeat(client, message ? message.guild.id : guildID);
     }, 5000);
     player.connection.voice.setSelfDeaf(true);
     player.connection.voice.setSelfMute(false);
@@ -134,9 +126,9 @@ module.exports.play = async function (client, message, seek = 0) {
         .setTitle(`Now playing`)
         .setDescription(player.queue[player.index].snippet.title)
         .setThumbnail(player.queue[player.index].snippet.thumbnails.default.url)
-      message.channel.send({embed: playNowEmbed});
+      message ? message.channel.send({embed: playNowEmbed}) : null;
     } else {
-      message.react('👌');
+      message ? message.react('👌') : null;
     };
     player.dispatcher.on('finish', async () => {
         clearInterval(heatBeat);
@@ -145,35 +137,34 @@ module.exports.play = async function (client, message, seek = 0) {
         if (player.loop === 'off' && player.queue.length !== 0) {
             player.queue.shift();
             if (player.queue.length === 0) {
-              return this.play(client, message);
+              return this.play(client, message, 0, guildID);
             };
             player.index = 0;
-            this.play(client, message);
+            this.play(client, message, 0, guildID);
           } else if (player.loop === 'on') {
             if (player.index === player.queue.length - 1) {
               player.index = 0;
             } else {
               player.index++;
             };
-            this.play(client, message);
+            this.play(client, message, 0, guildID);
           } else if (player.loop === 'once') {
-            this.play(client, message);
+            this.play(client, message, 0, guildID);
             player.index = player.index;
           };
         });
-    let r = 0;
+    let r;
     player.dispatcher.on('speaking', (s) => {
       if (s === r) return;
       r=s;
-      msgDl.delete({timeout: 1000}).catch((er) => {/* Message is already delete */});
       player.isPlaying = r === 1 ? true : false;
     });
     player.dispatcher.on('error',async (err) => {
         clearInterval(heatBeat);
         console.error(err);
-        message.channel.send(err, {code: 'js'});
+        message ? message.channel.send(err, {code: 'js'}) : null;
         player.index = player.backup.index;
-        return this.play(client, message, player.backup.seek/100);
+        return this.play(client, message, player.backup.seek/100, guildID);
     });
 };
 

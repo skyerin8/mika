@@ -18,19 +18,19 @@ module.exports = {
     enabled: true,
     execute: async function(client, message, args) {
       if (!message.member.voice.channel) return message.channel.send(`You must connect on the voice channel before !`);
-      if (!corePlayer.hasPermission(client, message)) return message.channel.send(`Do you not have necessery permission`);
-
+      
       const player = corePlayer.initPlayer(client, message.guild.id);
+
+      if (!corePlayer.hasPermission(client, message) &&
+        (message.guild.me.voice.channel && message.member.voice.channel.id === message.guild.me.voice.channel.id)) return message.channel.send(`Do you not have necessery permission`);
+
       player.connection = await message.member.voice.channel.join();
 
       if (!args.join('') && player.queue.length >= 1) return corePlayer.play(client, message);
 
       const youtube = await corePlayer.getSongs(args.join(' '));
       if (youtube.error) return message.channel.send(youtube.error.message, {code: 'js'});
-      if (youtube.isAxiosError) {
-        console.log(youtube.response.data);
-        return message.channel.send(youtube.response.data.error.status, {code: 'js'});
-      }
+      if (youtube.isAxiosError) return message.channel.send(`ERROR: code http ${youtube.status}`);
 
       for (const key in youtube.items) {
         youtube.items[key].snippet.title = htmlEntitiesDecoder(youtube.items[key].snippet.title);
@@ -47,7 +47,7 @@ module.exports = {
           time: 20000,
         });
         collector.on('collect', async (msgCollected) => {
-          const choice = msgCollected.content.trim().split(/ +/g)[0];
+          const choice = msgCollected.content.trim().split()[0];
           if (choice.toLowerCase() === 'cancel') {
             return collector.stop('STOPPED');
           };

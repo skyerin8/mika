@@ -29,8 +29,52 @@ module.exports = (client) => {
             isPlaying: player.isPlaying,
             volume: player.volume,
             type: player.type,
+            loop: player.loop,
         });
     });
 
-    app.listen(client.config.port, '0.0.0.0', () => console.log(`server listening on http://localhost:${client.config.port}`))
+    app.get('/api/control/:id/loop', (req, res) => {
+        const player = corePlayer.initPlayer(client, req.params.id);
+        if (player.loop === 'off') {
+            player.loop = 'on';
+        } else if (player.loop === 'on') {
+            player.loop = 'once';
+        } else /* if (player.loop === 'once')*/{
+            player.loop = 'off';
+        };
+
+        return res.status(202).json({loop: player.loop});
+    });
+
+    app.get('/api/control/:id/play/:index', (req, res) => {
+        const player = corePlayer.initPlayer(client, req.params.id);
+        player.index = req.params.index;
+
+        corePlayer.play(client, null,  0, req.params.id);
+
+        return res.status(202).json({
+            queue: player.queue,
+            index: player.index,
+            isPlaying: player.isPlaying,
+            volume: player.volume,
+            type: player.type,
+            loop: player.loop,
+        });
+    });
+
+    app.get('/api/control/:id/pause', (req, res) => {
+        const player = corePlayer.initPlayer(client, req.params.id);
+        player.dispatcher.pause();
+
+        return res.status(202).json({message: 'OK'});
+    });
+
+    app.get('/api/control/:id/resume', (req, res) => {
+        const player = corePlayer.initPlayer(client, req.params.id);
+        player.dispatcher.resume();
+
+        return res.status(202).json({message: 'OK'});
+    });
+
+    app.listen(8080, '0.0.0.0', () => console.log('server listening on https://localhost:8080'))
 };
