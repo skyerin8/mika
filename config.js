@@ -2,5 +2,9 @@
 
 module.exports = {
   prefix: 'p!',
-  port: 8080,
+  port: null,
+  embed: {
+    color: 'RED',
+  },
+  singleServer: true,
 };

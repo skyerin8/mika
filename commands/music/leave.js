@@ -24,11 +24,23 @@ module.exports = {
                 content: `Vote {{haveVoted}}/{{mustVote}}`,
             });
             if (call) {
+                corePlayer.presence(client, {
+                    status: 'online',
+                    activity: {
+                        name: '',
+                    },
+                }, false);
                 message.member.voice.channel.leave();
             } else {
                 return message.channel.send(`You don't leave bot from channel`);
             };
         } else {
+            corePlayer.presence(client, {
+                status: 'online',
+                activity: {
+                    name: '',
+                },
+            }, false);
             message.member.voice.channel.leave();
         };
     },

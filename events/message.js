@@ -11,7 +11,7 @@ module.exports = {
      * @return {Promise<Message>|null}
      */
     execute: function (client, message) {
-        if (message.author.bot || message.system) return null;
+        if (message.system) return null;
         if (!message.content.startsWith(client.config.prefix)) return null;
         const args = message.content.slice(client.config.prefix.length).trim().split(/ +/g);
         const command = args.shift().toLowerCase();

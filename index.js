@@ -10,6 +10,7 @@ client.aliases = new Collection();
 client.music = {};
 client.config = require('./config');
 
+require('./structures').TextBasedChannelStructure;
 require('./server/app')(client);
 
 function loadCommand(commandPath) {

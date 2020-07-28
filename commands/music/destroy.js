@@ -43,11 +43,23 @@ module.exports = {
                         index: null,
                         seek: null,
                     },
-                }
+                };
+                corePlayer.presence(client, {
+                    status: 'online',
+                    activity: {
+                        name: '',
+                    },
+                }, false);
             } else {
                 return message.channel.send(`You don't destroy the stream`);
             };
         } else {
+            corePlayer.presence(client, {
+                status: 'online',
+                activity: {
+                    name: '',
+                },
+            }, false);
             player.dispatcher.destroy();
             message.member.voice.channel.leave();
             client.music[message.guild.id] = {
